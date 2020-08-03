@@ -44,6 +44,8 @@
 
 ## Combine post title from multiple form fields example
 
+#### Meta fields only:
+
 ```php
 add_filter( 'jet-engine-extend-form-actions/config', function() {
 	return array(
@@ -64,3 +66,25 @@ add_filter( 'jet-engine-extend-form-actions/config', function() {
 	);
 } );
 ```
+
+#### Meta fields combined with taxonomy terms:
+
+```php
+add_filter( 'jet-engine-extend-form-actions/config', function() {
+	return array(
+		537 => array(
+			'_test_field_2' => array(
+				'prop' => 'post_data',
+				'key'  => 'post_title',
+			),
+			'_test_field' => array(
+				'prop'   => 'post_data',
+				'key'    => 'post_title',
+				'tax'    => 'category',
+				'prefix' => ', ',
+			),
+		),
+	);
+} );
+```
+
