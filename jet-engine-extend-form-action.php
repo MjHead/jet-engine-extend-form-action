@@ -136,35 +136,6 @@ class Jet_Engine_Extend_Form_Actions {
 						$value = $notifications->data[ $field ];
 						$value = $this->prepare_value( $value, $data );
 
-						if ( ! empty( $data['tax'] ) ) {
-
-							$is_single = false;
-
-							if ( ! is_array( $value ) ) {
-								$is_single = true;
-								$value = array( $value );
-							}
-
-							$terms = array();
-
-							foreach ( $value as $term_id ) {
-
-								$term = get_term_by( 'term_id', $term_id, $data['tax'] );
-
-								if ( $term ) {
-									$terms[] = $term->name;
-								}
-
-							}
-
-							if ( $is_single ) {
-								$value = isset( $terms[0] ) ? $terms[0] : false;
-							} else {
-								$value = $terms;
-							}
-
-						}
-
 						if ( ! empty( $postarr[ $data['key'] ] ) ) {
 							$meta_input[ $data['key'] ] .= $value;
 						} else {
@@ -266,11 +237,40 @@ class Jet_Engine_Extend_Form_Actions {
 
 	public function prepare_value( $value = '', $data = array() ) {
 
-		if ( ! empty( $data['prefix'] ) ) {
+		if ( ! empty( $data['tax'] ) ) {
+
+			$is_single = false;
+
+			if ( ! is_array( $value ) ) {
+				$is_single = true;
+				$value = array( $value );
+			}
+
+			$terms = array();
+
+			foreach ( $value as $term_id ) {
+
+				$term = get_term_by( 'term_id', $term_id, $data['tax'] );
+
+				if ( $term ) {
+					$terms[] = $term->name;
+				}
+
+			}
+
+			if ( $is_single ) {
+				$value = isset( $terms[0] ) ? $terms[0] : false;
+			} else {
+				$value = $terms;
+			}
+
+		}
+
+		if ( ! empty( $data['prefix'] ) && ! is_array( $value ) ) {
 			$value = $data['prefix'] . $value;
 		}
 
-		if ( ! empty( $data['suffix'] ) ) {
+		if ( ! empty( $data['suffix'] ) && ! is_array( $value ) ) {
 			$value .= $data['suffix'];
 		}
 
