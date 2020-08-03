@@ -34,10 +34,10 @@
  - *_form_field_1, _form_field_2, ...* - names of the submitted form field to get data from.
  - *prop* - 'post_data', 'post_meta' or 'post_terms' - type of data to set.
  - *key* - for 'post_meta' prop - is the meta key name to set, for 'post_data' - is the property of the post object to set.
- - *tax* - for 'post_terms' prop - taxonomy name to insert new terms into.
+ - *tax* - for 'post_terms' prop - taxonomy name to insert new terms into. You can also set 'tax' argument for *post_meta* in cases when you need to duplicate selected term from current taxonomy into meta field.
  - *prefix, suffix* - this arguments are used when you combining multiple fiels values into the same post field or meta key. Prefix is what need to be added before combined field, suffix - after
  - *by* - for the terms input is way how terms will be processed - if value is set to 'id' - passed terms IDs will be attaqched to post, with any other values - plugin will create term at first and than attach it to post
- 
+
 ## Combine post title from multiple form fields example
 
 ```php
