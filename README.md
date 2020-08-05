@@ -37,7 +37,7 @@
  - *tax* - for 'post_terms' prop - taxonomy name to insert new terms into. You can also set 'tax' argument for *post_meta* in cases when you need to duplicate selected term from current taxonomy into meta field.
  - *prefix, suffix* - this arguments are used when you combining multiple fiels values into the same post field or meta key. Prefix is what need to be added before combined field, suffix - after
  - *by* - for the terms input is way how terms will be processed - if value is set to 'id' - passed terms IDs will be attaqched to post, with any other values - plugin will create term at first and than attach it to post
- 
+
 ## How to use
 - Download, install and activate plugin;
 - Add configuration code (see example above) into the end of **functions.php** file of your active theme.
@@ -87,4 +87,26 @@ add_filter( 'jet-engine-extend-form-actions/config', function() {
 	);
 } );
 ```
+## Multiple props for the same form field example
 
+```php
+add_filter( 'jet-engine-extend-form-actions/config', function() {
+	return array(
+		39 => array(
+			'inserted_post_id' => array(
+				'props' => array(
+					array(
+						'prop'   => 'post_data',
+						'key'    => 'post_title',
+						'prefix' => '#',
+					),
+					array(
+						'prop'   => 'post_data',
+						'key'    => 'post_name',
+					),
+				),
+			),
+		),
+	);
+} );
+```
