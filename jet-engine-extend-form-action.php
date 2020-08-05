@@ -3,7 +3,7 @@
  * Plugin Name: JetEngine - Extend form actions
  * Plugin URI: Allow to insert additional data on Insert/Update post action
  * Description:
- * Version:     1.0.0
+ * Version:     1.1.0
  * Author:      Crocoblock
  * Author URI:  https://crocoblock.com/
  * Text Domain: jet-appointments-booking
@@ -46,6 +46,20 @@ if ( ! defined( 'WPINC' ) ) {
 				'prop'   => 'post_meta',
 				'key'    => '_meta_key',
 				'tax'    => 'taxonomy_slug',
+			),
+			'_form_field_5' => array(
+				'props' => array(
+					array(
+						'prop'   => 'post_meta',
+						'key'    => '_meta_key',
+						'tax'    => 'taxonomy_slug',
+					),
+					array(
+						'prop'   => 'post_data',
+						'key'    => 'post_title',
+						'prefix' => ' ',
+					),
+				),
 			),
 		),
 	);
@@ -104,112 +118,119 @@ class Jet_Engine_Extend_Form_Actions {
 		$meta_input  = array();
 		$terms_input = array();
 
-		foreach ( $this->config[ $form_id ] as $field => $data ) {
+		foreach ( $this->config[ $form_id ] as $field => $props_set ) {
 
 			if ( ! isset( $notifications->data[ $field ] ) ) {
 				continue;
 			}
 
-			switch ( $data['prop'] ) {
+			if ( empty( $props_set['props'] ) ) {
+				$props_set['props'] = array( $props_set );
+			}
 
-				case 'post_data':
+			foreach ( $props_set['props'] as $data ) {
 
-					if ( ! empty( $data['key'] ) ) {
+				switch ( $data['prop'] ) {
 
-						$value = $notifications->data[ $field ];
-						$value = $this->prepare_value( $value, $data );
+					case 'post_data':
 
-						if ( ! empty( $postarr[ $data['key'] ] ) ) {
-							$postarr[ $data['key'] ] .= $value;
-						} else {
-							$postarr[ $data['key'] ] = $value;
-						}
+						if ( ! empty( $data['key'] ) ) {
 
-					}
+							$value = $notifications->data[ $field ];
+							$value = $this->prepare_value( $value, $data );
 
-					break;
-
-				case 'post_meta':
-
-					if ( ! empty( $data['key'] ) ) {
-
-						$value = $notifications->data[ $field ];
-						$value = $this->prepare_value( $value, $data );
-
-						if ( ! empty( $postarr[ $data['key'] ] ) ) {
-							$meta_input[ $data['key'] ] .= $value;
-						} else {
-							$meta_input[ $data['key'] ] = $value;
-						}
-
-					}
-
-					break;
-
-				case 'post_terms':
-
-					if ( ! empty( $data['tax'] ) ) {
-
-						$tax   = $data['tax'];
-						$value = $notifications->data[ $field ];
-
-						if ( ! isset( $terms_input[ $tax ] ) ) {
-							$terms_input[ $tax ] = array();
-						}
-
-						$by = ! empty( $data['by'] ) ? $data['by'] : 'name';
-
-						if ( 'id' === $by ) {
-							$terms_list = $value;
-						} else {
-
-							if ( ! is_array( $value ) ) {
-								$value = array( $value );
+							if ( ! empty( $postarr[ $data['key'] ] ) ) {
+								$postarr[ $data['key'] ] .= $value;
+							} else {
+								$postarr[ $data['key'] ] = $value;
 							}
 
-							$terms_list = array();
+						}
 
-							foreach ( $value as $term ) {
+						break;
 
-								$term_id = term_exists( $term, $tax );
+					case 'post_meta':
 
-								if ( ! empty( $term_id ) && is_array( $term_id ) ) {
-									$terms_list[] = $term_id['term_id'];
-								} else {
+						if ( ! empty( $data['key'] ) ) {
 
-									$term_args = apply_filters(
-										'jet-engine-extend-form-actions/insert-term-args',
-										array(),
-										$data,
-										$args,
-										$notifications
-									);
+							$value = $notifications->data[ $field ];
+							$value = $this->prepare_value( $value, $data );
 
-									$term_id = wp_insert_term( $term, $tax, $term_args );
+							if ( ! empty( $postarr[ $data['key'] ] ) ) {
+								$meta_input[ $data['key'] ] .= $value;
+							} else {
+								$meta_input[ $data['key'] ] = $value;
+							}
+
+						}
+
+						break;
+
+					case 'post_terms':
+
+						if ( ! empty( $data['tax'] ) ) {
+
+							$tax   = $data['tax'];
+							$value = $notifications->data[ $field ];
+
+							if ( ! isset( $terms_input[ $tax ] ) ) {
+								$terms_input[ $tax ] = array();
+							}
+
+							$by = ! empty( $data['by'] ) ? $data['by'] : 'name';
+
+							if ( 'id' === $by ) {
+								$terms_list = $value;
+							} else {
+
+								if ( ! is_array( $value ) ) {
+									$value = array( $value );
+								}
+
+								$terms_list = array();
+
+								foreach ( $value as $term ) {
+
+									$term_id = term_exists( $term, $tax );
 
 									if ( ! empty( $term_id ) && is_array( $term_id ) ) {
 										$terms_list[] = $term_id['term_id'];
+									} else {
+
+										$term_args = apply_filters(
+											'jet-engine-extend-form-actions/insert-term-args',
+											array(),
+											$data,
+											$args,
+											$notifications
+										);
+
+										$term_id = wp_insert_term( $term, $tax, $term_args );
+
+										if ( ! empty( $term_id ) && is_array( $term_id ) ) {
+											$terms_list[] = $term_id['term_id'];
+										}
+
 									}
 
 								}
 
 							}
 
+							if ( ! is_array( $terms_list ) ) {
+								$terms_input[ $tax ][] = absint( $terms_list );
+							} else {
+								$terms_input[ $tax ] = array_merge(
+									$terms_input[ $tax ],
+									array_map( 'absint', $terms_list )
+								);
+							}
+
 						}
 
-						if ( ! is_array( $terms_list ) ) {
-							$terms_input[ $tax ][] = absint( $terms_list );
-						} else {
-							$terms_input[ $tax ] = array_merge(
-								$terms_input[ $tax ],
-								array_map( 'absint', $terms_list )
-							);
-						}
+						break;
 
-					}
-
-					break;
-
+				}
 			}
 
 		}
