@@ -156,7 +156,7 @@ class Jet_Engine_Extend_Form_Actions {
 							$value = $notifications->data[ $field ];
 							$value = $this->prepare_value( $value, $data );
 
-							if ( ! empty( $postarr[ $data['key'] ] ) ) {
+							if ( ! empty( $meta_input[ $data['key'] ] ) ) {
 								$meta_input[ $data['key'] ] .= $value;
 							} else {
 								$meta_input[ $data['key'] ] = $value;
