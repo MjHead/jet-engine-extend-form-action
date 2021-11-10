@@ -98,19 +98,22 @@ class Jet_Engine_Extend_Form_Actions {
 
 		add_action(
 			'jet-engine/forms/booking/notification/insert_post',
-			array( $this, 'update_post' ), 20, 2
+			array( $this, 'update_post_je' ), 20, 2
+		);
+
+		add_action(
+			'jet-form-builder/form-handler/after-send',
+			array( $this, 'update_post_jfb' )
 		);
 	}
 
-	public function update_post( $args, $notifications ) {
-
-		$form_id = $notifications->form;
+	public function update_post( $post_id, $form_id, $request, ...$term_args_payload ) {
 
 		if ( ! isset( $this->config[ $form_id ] ) ) {
 			return;
 		}
 
-		if ( empty( $notifications->data['inserted_post_id'] ) ) {
+		if ( empty( $post_id ) ) {
 			return;
 		}
 
@@ -120,7 +123,7 @@ class Jet_Engine_Extend_Form_Actions {
 
 		foreach ( $this->config[ $form_id ] as $field => $props_set ) {
 
-			if ( ! isset( $notifications->data[ $field ] ) ) {
+			if ( ! isset( $request[ $field ] ) ) {
 				continue;
 			}
 
@@ -136,7 +139,7 @@ class Jet_Engine_Extend_Form_Actions {
 
 						if ( ! empty( $data['key'] ) ) {
 
-							$value = $notifications->data[ $field ];
+							$value = $request[ $field ];
 							$value = $this->prepare_value( $value, $data );
 
 							if ( ! empty( $postarr[ $data['key'] ] ) ) {
@@ -153,7 +156,7 @@ class Jet_Engine_Extend_Form_Actions {
 
 						if ( ! empty( $data['key'] ) ) {
 
-							$value = $notifications->data[ $field ];
+							$value = $request[ $field ];
 							$value = $this->prepare_value( $value, $data );
 
 							if ( ! empty( $meta_input[ $data['key'] ] ) ) {
@@ -171,7 +174,7 @@ class Jet_Engine_Extend_Form_Actions {
 						if ( ! empty( $data['tax'] ) ) {
 
 							$tax   = $data['tax'];
-							$value = $notifications->data[ $field ];
+							$value = $request[ $field ];
 
 							if ( ! isset( $terms_input[ $tax ] ) ) {
 								$terms_input[ $tax ] = array();
@@ -201,8 +204,7 @@ class Jet_Engine_Extend_Form_Actions {
 											'jet-engine-extend-form-actions/insert-term-args',
 											array(),
 											$data,
-											$args,
-											$notifications
+											...$term_args_payload
 										);
 
 										$term_id = wp_insert_term( $term, $tax, $term_args );
@@ -235,8 +237,6 @@ class Jet_Engine_Extend_Form_Actions {
 
 		}
 
-		$post_id = absint( $notifications->data['inserted_post_id'] );
-
 		if ( ! empty( $postarr ) ) {
 			$postarr['ID'] = $post_id;
 			wp_update_post( $postarr );
@@ -253,7 +253,22 @@ class Jet_Engine_Extend_Form_Actions {
 				$res = wp_set_post_terms( $post_id, $terms, $tax );
 			}
 		}
+	}
 
+	public function update_post_je( $args, $notifications ) {
+		$post_id = absint( $notifications->data['inserted_post_id'] ?? 0 );
+		$form_id = $notifications->form;
+
+		$this->update_post( $post_id, $form_id, $notifications->data, $args, $notifications );
+	}
+
+
+	public function update_post_jfb() {
+		$post_id = jet_form_builder()->form_handler->action_handler->get_inserted_post_id();
+		$form_id = jet_form_builder()->form_handler->form_id;
+		$request = jet_form_builder()->form_handler->action_handler->request_data;
+
+		$this->update_post( $post_id, $form_id, $request );
 	}
 
 	public function prepare_value( $value = '', $data = array() ) {
@@ -264,7 +279,7 @@ class Jet_Engine_Extend_Form_Actions {
 
 			if ( ! is_array( $value ) ) {
 				$is_single = true;
-				$value = array( $value );
+				$value     = array( $value );
 			}
 
 			$terms = array();
