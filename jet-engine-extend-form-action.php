@@ -81,7 +81,7 @@ class Jet_Engine_Extend_Form_Actions {
 	public $config = array();
 
 	public function __construct() {
-		add_action( 'jet-engine/forms/init', array( $this, 'init' ) );
+		add_action( 'init', array( $this, 'init' ) );
 	}
 
 	public function init() {
